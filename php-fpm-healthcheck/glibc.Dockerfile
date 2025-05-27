@@ -1,8 +1,8 @@
-FROM alpine AS builder
+FROM debian:bookworm AS builder
 
 RUN set -eux \
-    && apk upgrade --available \
-    && apk add curl git \
+    && apt update \
+    && apt install -y curl git \
     && true
 
 USER root
@@ -29,11 +29,14 @@ RUN set -eux \
     && git commit -m "core" \
     && true
 
+
 RUN set -eux \
     && curl https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck > /usr/local/bin/php-fpm-healthcheck \
     && chmod +x /usr/local/bin/php-fpm-healthcheck \
-    && apk add fcgi busybox grep \
+    && apt install -y libfcgi-dev \
     && true
+
+
 
 RUN set -eux \
     # Installation: Generic
@@ -41,5 +44,5 @@ RUN set -eux \
     && (git ls-files --others --exclude-standard; git diff --name-only --cached --diff-filter=A) | sort -u | while IFS= read -r file; do cp -v --parents "/${file}" /opt; done \
     && true
 
-#FROM scratch
-#COPY --from=builder /opt /
+FROM scratch
+COPY --from=builder /opt /
